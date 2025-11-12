@@ -9,10 +9,10 @@
       --scale: 6;           /* visueller Zoomfaktor (integer) */
       --vw: 160;            /* virtuelle Breite in Pixeln der Pixelwelt */
       --vh: 120;            /* virtuelle Höhe */
-      --bg: #0b0e1a;
-      --fg: #ffffff;
-      --accent: #66ccff;
-      --link: #ffd54a;
+      --bg: #0e1318;        /* dunkles Teal/Graphit wie Referenz */
+      --fg: #f7efe1;        /* warmes Off‑White */
+      --accent: #d9672d;    /* Orange wie Referenz */
+      --link: #ffd54a;      /* warmes Gelb */
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
@@ -24,48 +24,35 @@
       display: grid;
       grid-template-rows: 1fr auto;
     }
-    header {
-      text-align: center;
-      padding: 12px 8px 0;
-      opacity: .85;
-    }
+    header { text-align: center; padding: 12px 8px 0; opacity: .92; }
     header h1 { margin: 0 0 4px; font-size: 18px; font-weight: 700; letter-spacing: .3px; }
-    header p { margin: 0; font-size: 12px; color: #c0c6d0; }
+    header p { margin: 0; font-size: 12px; color: #ccbfae; }
 
-    .stage-wrap {
-      display: grid;
-      place-items: center;
-      padding: 8px 0 0;
-    }
+    .stage-wrap { display: grid; place-items: center; padding: 8px 0 0; }
     canvas {
       width: calc(var(--vw) * 1px * var(--scale));
       height: calc(var(--vh) * 1px * var(--scale));
-      image-rendering: pixelated;     /* super crisp */
-      image-rendering: crisp-edges;
+      image-rendering: pixelated; image-rendering: crisp-edges;
       border-radius: 12px;
-      outline: 1px solid rgba(255,255,255,.08);
-      box-shadow: 0 12px 40px rgba(0,0,0,.45), 0 0 0 4px rgba(255,255,255,.02) inset;
-      background: #87CEEB;
+      outline: 1px solid rgba(0,0,0,.6);
+      box-shadow: 0 12px 40px rgba(0,0,0,.65), 0 0 0 3px rgba(255,255,255,.03) inset;
+      background: #1e2b32; /* tiefer Nachthimmelton als Grundfarbe */
     }
 
-    /* Fallback Links unterhalb für Accessibility & SEO */
-    nav.quicklinks {
-      display: grid; gap: 6px; grid-auto-flow: column; justify-content: center; padding: 10px 8px 16px;
-    }
+    nav.quicklinks { display: grid; gap: 6px; grid-auto-flow: column; justify-content: center; padding: 10px 8px 16px; }
     nav.quicklinks a {
-      color: var(--link); text-decoration: none; font-weight: 600; background: rgba(255,255,255,.06);
-      padding: 6px 10px; border-radius: 10px; outline: 1px solid rgba(255,255,255,.08)
+      color: var(--fg); text-decoration: none; font-weight: 700; background: #1b242a;
+      padding: 6px 10px; border-radius: 10px; outline: 1px solid rgba(255,255,255,.06)
     }
-    nav.quicklinks a:hover { background: rgba(255,255,255,.12); }
+    nav.quicklinks a:hover { background: #22323a; color: #fff3c4; }
 
     main { max-width: 900px; margin: 0 auto; padding: 12px 16px 28px; }
     main section { margin: 28px 0; }
-    main h2 { margin: 0 0 8px; font-size: 20px; }
-    main p { margin: 0; color: #cbd3df; }
+    main h2 { margin: 0 0 8px; font-size: 20px; color: #fff3c4; }
+    main p { margin: 0; color: #ccbfae; }
 
     footer { color:#9aa3b2; text-align:center; padding: 12px; font-size: 12px; }
 
-    /* kleiner, wenn Viewport schmal ist */
     @media (max-width: 480px) {
       :root { --scale: 4; }
       header h1 { font-size: 16px; }
@@ -120,9 +107,26 @@
   const rnd = (a,b)=> Math.random()*(b-a)+a;
 
   // --- Scene config ------------------------------------------------------
+  const PALETTE = {
+    ink: '#0e1318',
+    panel: '#1e2b32',
+    panelHi: '#223741',
+    sand: '#e6d7c3',
+    bone: '#d8c7ae',
+    whiteWarm: '#f7efe1',
+    orange: '#d9672d',
+    orangeHi: '#ff9a58',
+    teal: '#35545c',
+    tealHi: '#4d6e77',
+    lawn: '#37543a',
+    lawnHi: '#4a6a4b',
+    brown: '#3a2a23',
+    shadow: '#0b0f13'
+  };
+
   const scene = {
     day: true,
-    timeFactor: 0,        // 0..1 for transitions day<->night
+    timeFactor: 0,
     stars: Array.from({length: 40}, () => ({ x: Math.random()*W|0, y: (Math.random()*40)|0, tw: Math.random()*Math.PI*2 })),
     gullAsleep: false
   };
@@ -158,14 +162,29 @@
 
   // --- Drawing helpers ---------------------------------------------------
   function drawSky() {
-    // Interpolate colors between day and night
     const t = scene.timeFactor; // 0..1
-    const dayTop = [135, 206, 235];     // #87CEEB
-    const dayBot = [186, 230, 253];     // #bae6fd
-    const nightTop= [7, 10, 20];        // sehr dunkel
-    const nightBot= [14, 18, 38];
-    const lerp = (a,b)=> (a + (b-a)*t)|0;
+    const lerp = (a,b)=> Math.round(a + (b-a)*t);
+    // statt weicher Verläufe eher harte Bänder im Stil der Referenz
+    const dayTop = [110, 160, 190];
+    const nightTop= [14, 22, 28];
     const top = `rgb(${lerp(dayTop[0],nightTop[0])},${lerp(dayTop[1],nightTop[1])},${lerp(dayTop[2],nightTop[2])})`;
+    rect(0,0,W,H, top);
+
+    // dezente Vignette / Rahmen wie Pixel-Kacheln
+    ctx.strokeStyle = 'rgba(0,0,0,.6)';
+    ctx.strokeRect(0.5,0.5,W-1,H-1);
+
+    // Sonne / Sterne
+    if (t < 0.5) {
+      ctx.fillStyle = '#fff3c4';
+      ctx.beginPath(); ctx.arc(135, 20, 6, 0, Math.PI*2); ctx.fill();
+    } else {
+      ctx.globalAlpha = (t - 0.4) * 1.6;
+      ctx.fillStyle = PALETTE.whiteWarm;
+      for (const s of scene.stars) if (((Math.sin(Date.now()*0.003 + s.tw)+1)*0.5) > 0.6) ctx.fillRect(s.x, s.y, 1, 1);
+      ctx.globalAlpha = 1;
+    }
+  },${lerp(dayTop[1],nightTop[1])},${lerp(dayTop[2],nightTop[2])})`;
     const bot = `rgb(${lerp(dayBot[0],nightBot[0])},${lerp(dayBot[1],nightBot[1])},${lerp(dayBot[2],nightBot[2])})`;
 
     const g = ctx.createLinearGradient(0,0,0,H);
@@ -194,9 +213,15 @@
   }
 
   function drawSea() {
-    // Nordsee im Hintergrund hinter dem Deich – nur schmaler Streifen
     const horizonY = 64;
-    rect(0, horizonY, W, 10, `rgba(${20 + scene.timeFactor*20|0}, ${80 + scene.timeFactor*20|0}, ${150 + scene.timeFactor*20|0}, 1)`);
+    // mattes Petrol mit leichtem Banding
+    rect(0, horizonY, W, 10, PALETTE.teal);
+    for (let y=0; y<3; y++) rect(0, horizonY+y*3, W, 1, PALETTE.tealHi);
+    // kleine helle Pixel als Wellen (wenige, chunky)
+    ctx.globalAlpha = 0.5 - scene.timeFactor*0.25;
+    for (let x=0; x<W; x+=7) pixel(x, horizonY + ((x*13)%7), PALETTE.whiteWarm);
+    ctx.globalAlpha = 1;
+  }, ${80 + scene.timeFactor*20|0}, ${150 + scene.timeFactor*20|0}, 1)`);
     // kleine helle Linien als Wellen
     ctx.globalAlpha = 0.4 - scene.timeFactor*0.2;
     ctx.strokeStyle = '#cfe9ff';
@@ -207,12 +232,14 @@
   }
 
   function drawDike() {
-    // Deich als hügelige grüne Fläche
     const baseY = 80;
-    const t = Date.now()*0.0005;
     for (let y = baseY; y < H; y++) {
-      const green = 120 - (y-baseY);
-      ctx.fillStyle = `rgb(${40}, ${Math.max(80, green)}, ${40})`;
+      const use = (y%2===0) ? PALETTE.lawn : PALETTE.lawnHi;
+      ctx.fillStyle = use; ctx.fillRect(0, y, W, 1);
+    }
+    // Hügelkante dunkel
+    for (let x=0; x<W; x++) pixel(x, 78 + Math.sin(x*0.07)*1.2, '#25432b');
+  }, ${Math.max(80, green)}, ${40})`;
       ctx.fillRect(0, y, W, 1);
     }
     // leichte Hügelkante
@@ -223,22 +250,31 @@
   }
 
   function drawBillboard() {
-    // Stützen
-    rect(58, 58, 4, 26, '#4b4b4b');
-    rect(98, 58, 4, 26, '#4b4b4b');
-    // Tafel
-    rect(48, 40, 64, 24, '#f2f2f2');
-    rect(49, 41, 62, 22, '#ffffff');
-    // Rahmen
-    ctx.strokeStyle = '#777';
+    // Stützen (dunkles Braun)
+    rect(58, 58, 4, 26, PALETTE.brown);
+    rect(98, 58, 4, 26, PALETTE.brown);
+    // Tafel – warmer Off-White mit braunem Rahmen wie im Referenz-Tile
+    rect(48, 40, 64, 24, PALETTE.brown);
+    rect(49, 41, 62, 22, PALETTE.whiteWarm);
+    ctx.strokeStyle = '#3d2f28';
     ctx.strokeRect(48.5, 40.5, 63, 23);
 
-    // Lichtfassungen (3 Leuchten oben)
+    // Leuchten (Gehäuse)
     const lampXs = [58, 80, 102];
-    for (const lx of lampXs) {
-      rect(lx-1, 38, 4, 2, '#444');
-      rect(lx, 36, 2, 2, '#666');
+    for (const lx of lampXs) { rect(lx-1, 38, 4, 2, '#2a2220'); rect(lx, 36, 2, 2, '#4a3a33'); }
+
+    if (scene.timeFactor > 0.55) {
+      const alpha = (scene.timeFactor - 0.55) * 1.2;
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = `rgba(255, 224, 150, ${0.35*alpha})`;
+      for (const lx of lampXs) {
+        ctx.beginPath(); ctx.moveTo(lx+1, 38); ctx.lineTo(48, 40); ctx.lineTo(112, 40); ctx.closePath(); ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      rect(50, 42, 60, 20, `rgba(255,232,180,${0.12 + 0.25*alpha})`);
     }
+    drawGull(104, 34);
+  }
 
     // Lichtkegel nachts
     if (scene.timeFactor > 0.55) {
@@ -263,20 +299,16 @@
   }
 
   function drawGull(x,y){
+    // Outline
+    rect(x-1, y, 1, 5, PALETTE.shadow);
     // Körper
-    rect(x, y, 8, 4, '#dcdcdc');
-    rect(x+1, y+1, 6, 2, '#ffffff');
-    // Kopf weggewandt (nach rechts)
-    rect(x+7, y+1, 2, 2, '#dcdcdc');
-    // Schnabel nach hinten nicht sichtbar -> kleiner Tupfer
-    pixel(x+8, y+2, '#b5b5b5');
-    // Flügel
-    rect(x+2, y+2, 4, 1, '#b5b5b5');
-    // Beine (wenn wach)
-    if (!scene.gullAsleep) {
-      pixel(x+2, y+4, '#d4a64a');
-      pixel(x+5, y+4, '#d4a64a');
-    }
+    rect(x, y, 8, 4, PALETTE.whiteWarm);
+    rect(x+1, y+1, 6, 2, '#fff3c4');
+    rect(x+7, y+1, 2, 2, PALETTE.bone);
+    rect(x+2, y+2, 4, 1, '#cbbfa6');
+    if (!scene.gullAsleep) { pixel(x+2, y+4, '#d4a64a'); pixel(x+5, y+4, '#d4a64a'); }
+    if (scene.gullAsleep) { const zX = x+3 + Math.sin(Date.now()*0.004)*1; pixel(zX, y-2, PALETTE.whiteWarm); }
+  }
     // Schlafblase bei Nacht
     if (scene.gullAsleep) {
       const zX = x+3 + Math.sin(Date.now()*0.004)*1;
@@ -285,43 +317,24 @@
   }
 
   function drawSheepOne(s) {
-    // s: {bx,by,t,kind}
-    // Grundform
     const x = s.bx + (s.kind==='watch' ? Math.sin(Date.now()*0.003 + s.bx)*1.5 : 0);
     const y = s.by;
+    // Outline
+    rect(x-1, y, 1, 9, PALETTE.shadow);
     // Körper
-    rect(x, y, 12, 8, '#f4f4f4');
-    rect(x+1, y+1, 10, 6, '#ffffff');
+    rect(x, y, 12, 8, PALETTE.whiteWarm);
+    rect(x+1, y+1, 10, 6, '#fff3c4');
     // Kopf
     const faceY = y+2 + (s.kind==='eat' ? 2+Math.sin(Date.now()*0.004+s.bx)*1.5 : 0) + (s.kind==='sleep'?1:0);
-    const faceX = x - (s.flip?2:2);
-    rect(faceX, faceY, 4, 3, '#444');
-    // Auge (nur wenn nicht schlafend nachts)
+    const faceX = x - 2;
+    rect(faceX, faceY, 4, 3, '#2b2927');
     const nightSleepAll = scene.timeFactor>0.6;
-    if (!(nightSleepAll || s.kind==='sleep')) {
-      pixel(faceX+1, faceY+1, '#ffffff');
-    } else {
-      // geschlossene Augen
-      pixel(faceX+1, faceY+2, '#888');
-    }
-    // Beine (rudimentär, kleines Wackeln = Laufen)
+    if (!(nightSleepAll || s.kind==='sleep')) pixel(faceX+1, faceY+1, PALETTE.whiteWarm); else pixel(faceX+1, faceY+2, '#7b736b');
     const step = Math.sin(Date.now()*0.008 + s.bx);
-    if (s.kind==='watch' && !nightSleepAll) {
-      pixel(x+3, y+8, step>0? '#333':'#444');
-      pixel(x+7, y+8, step<0? '#333':'#444');
-    } else {
-      pixel(x+3, y+8, '#333');
-      pixel(x+7, y+8, '#333');
-    }
-
-    // Text-Label auf dem Körper (Mini-Pixel-Schrift)
+    if (s.kind==='watch' && !nightSleepAll) { pixel(x+3, y+8, step>0? '#24201c':'#3a2a23'); pixel(x+7, y+8, step<0? '#24201c':'#3a2a23'); }
+    else { pixel(x+3, y+8, '#24201c'); pixel(x+7, y+8, '#24201c'); }
     drawTinyText(Math.round(x+1), Math.round(y+2), s.label);
-
-    // Schlaf-Zeichen
-    if (s.kind==='sleep' || nightSleepAll) {
-      const z = Math.sin(Date.now()*0.006 + s.bx);
-      pixel(x+10, y-2 + (z>0?0:1), '#ffffff');
-    }
+    if (s.kind==='sleep' || nightSleepAll) { const z = Math.sin(Date.now()*0.006 + s.bx); pixel(x+10, y-2 + (z>0?0:1), PALETTE.whiteWarm); }
   }
 
   // Minimalistische Pixel-Schrift (5×5 Grid pro Buchstabe, groß genug für kurze Wörter)
